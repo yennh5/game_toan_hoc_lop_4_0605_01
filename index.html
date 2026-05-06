@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Vui Học Toán Lớp 2</title>
+    <!-- Sử dụng Tailwind CSS qua CDN để responsive và styling nhanh -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font chữ đáng yêu cho bé -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #bbf7d0 0%, #bfdbfe 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 1rem;
+        }
+
+        /* Nút bấm phong cách hoạt hình */
+        .btn-cartoon {
+            transition: all 0.1s ease-in-out;
+            box-shadow: 0 6px 0 0 rgba(0,0,0,0.15);
+        }
+        .btn-cartoon:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 0 rgba(0,0,0,0.15);
+        }
+
+        /* Hiệu ứng nhấp nháy cho đáp án đúng khi bé chọn sai */
+        @keyframes blink-green {
+            0%, 100% { background-color: white; border-color: #93c5fd; color: #374151; transform: scale(1); }
+            50% { background-color: #4ade80; border-color: #22c55e; color: white; transform: scale(1.05); }
+        }
+        .blink-correct {
+            animation: blink-green 1s infinite;
+            pointer-events: none;
+        }
+
+        /* Trạng thái đáp án */
+        .opt-btn {
+            transition: all 0.2s ease;
+        }
+        .opt-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            background-color: #eff6ff;
+        }
+        .opt-correct {
+            background-color: #4ade80 !important; /* Xanh lá */
+            border-color: #22c55e !important;
+            color: white !important;
+        }
+        .opt-wrong {
+            background-color: #f87171 !important; /* Đỏ */
+            border-color: #ef4444 !important;
+            color: white !important;
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MÀN HÌNH CHÍNH -->
+    <div id="start-screen" class="bg-white rounded-[2rem] shadow-2xl p-8 md:p-12 max-w-xl w-full text-center bounce-in">
+        <h1 class="text-4xl md:text-5xl font-black text-orange-500 mb-6 drop-shadow-md">Vui Học Toán Lớp 2</h1>
+        <p class="text-xl text-gray-600 mb-10 font-bold">Cùng nhau ôn tập và nhận điểm 10 nhé!</p>
+        <button onclick="startGame()" class="btn-cartoon bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-black text-2xl py-4 px-10 rounded-full w-full">
+            BẮT ĐẦU CHƠI 🚀
+        </button>
+    </div>
+
+    <!-- MÀN HÌNH CÂU HỎI -->
+    <div id="game-screen" class="hidden bg-white rounded-[2rem] shadow-2xl p-6 md:p-10 max-w-3xl w-full">
+        <!-- Progress -->
+        <div class="flex justify-between items-center mb-6">
+            <span id="question-counter" class="text-lg md:text-xl font-bold text-blue-500 bg-blue-100 py-1 px-4 rounded-full">Câu: 1/10</span>
+            <span id="score-display" class="text-lg md:text-xl font-bold text-green-600 bg-green-100 py-1 px-4 rounded-full">Điểm: 0</span>
+        </div>
+
+        <!-- Nội dung câu hỏi -->
+        <h2 id="question-text" class="text-2xl md:text-3xl font-bold text-gray-800 mb-8 leading-snug">
+            Nội dung câu hỏi sẽ hiển thị ở đây?
+        </h2>
+
+        <!-- Các đáp án -->
+        <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Nút đáp án sinh tự động bằng JS -->
+        </div>
+
+        <!-- Phản hồi đúng/sai và Giải thích -->
+        <div id="feedback" class="text-center min-h-[60px] mb-6">
+            <!-- Text phản hồi và box giải thích sẽ hiện ở đây -->
+        </div>
+
+        <!-- Nút tiếp tục -->
+        <button id="next-btn" onclick="nextQuestion()" class="hidden btn-cartoon bg-blue-500 hover:bg-blue-600 text-white font-black text-xl py-4 px-8 rounded-full w-full mt-4">
+            CÂU TIẾP THEO ➡️
+        </button>
+    </div>
+
+    <!-- MÀN HÌNH KẾT THÚC -->
+    <div id="end-screen" class="hidden bg-white rounded-[2rem] shadow-2xl p-8 md:p-12 max-w-xl w-full text-center">
+        <h1 class="text-4xl md:text-5xl font-black text-green-500 mb-4">Hoàn thành! 🎉</h1>
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-700 mb-6">Chúc mừng con đã hoàn thành!</h2>
+        <div class="bg-yellow-100 rounded-3xl p-6 mb-8">
+            <p class="text-xl font-bold text-gray-600 mb-2">Số câu trả lời đúng:</p>
+            <p id="final-score" class="text-5xl font-black text-orange-500">0/0</p>
+        </div>
+        <button onclick="resetGame()" class="btn-cartoon bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-black text-2xl py-4 px-10 rounded-full w-full">
+            🔄 CHƠI LẠI TỪ ĐẦU
+        </button>
+    </div>
+
+    <script>
+        // --- DỮ LIỆU CÂU HỎI ---
+		const questions = [
+			{ 
+				q: "Số gồm 4 trăm nghìn, 4 nghìn, 5 trăm, 1 chục và 8 đơn vị viết là:", 
+				options: ["44 518", "404 518", "440 518", "445 018"], 
+				answer: 1,
+				explanation: "Số gồm 4 trăm nghìn, 0 chục nghìn, 4 nghìn, 5 trăm, 1 chục và 8 đơn vị được viết là 404 518."
+			},
+			{ 
+				q: "Rút gọn phân số 18/36 ta được phân số tối giản là:", 
+				options: ["9/18", "3/6", "3/4", "1/2"], 
+				answer: 3,
+				explanation: "Chia cả tử và mẫu cho 18: 18 : 18 = 1 và 36 : 18 = 2. Ta được phân số tối giản là 1/2."
+			},
+			{ 
+				q: "Các con vật (Gà: 5/2 kg, Thỏ: 19/4 kg, Vịt: 9/4 kg, Mèo: 28/8 kg) có cân nặng theo thứ tự từ bé đến lớn là:", 
+				options: ["Gà, thỏ, vịt, mèo", "Gà, vịt, thỏ, mèo", "Vịt, gà, mèo, thỏ", "Vịt, gà, thỏ, mèo"], 
+				answer: 2,
+				explanation: "Quy đồng mẫu số chung là 4: Vịt (9/4 kg) < Gà (10/4 kg) < Mèo (14/4 kg) < Thỏ (19/4 kg). Thứ tự đúng là: Vịt, Gà, Mèo, Thỏ."
+			},
+			{ 
+				q: "Trong hộp có 5 quả bóng (2 xanh, 3 đỏ). Không nhìn vào hộp, lấy ra 4 quả bóng. Ta nói: 'Trong 4 quả bóng lấy ra, có 3 quả bóng màu đỏ'. Từ thích hợp điền vào chỗ chấm là:", 
+				options: ["Chắc chắn", "Có thể", "Không thể", "Không có đáp án"], 
+				answer: 1,
+				explanation: "Vì trong hộp có 3 quả đỏ, khi lấy 4 quả thì có trường hợp lấy được cả 3 quả đỏ, nhưng cũng có trường hợp chỉ lấy được 2 quả đỏ và 2 quả xanh. Do đó đây là sự kiện 'Có thể'."
+			},
+			{ 
+				q: "Điền số thích hợp: 12 m² 5 dm² = .............. dm²", 
+				options: ["125", "1205", "1250", "12005"], 
+				answer: 1,
+				explanation: "Vì 1 m² = 100 dm² nên 12 m² = 1200 dm². Vậy 1200 + 5 = 1205 dm²."
+			},
+			{ 
+				q: "Điền số thích hợp: 1/4 thế kỉ 15 năm = ............. năm", 
+				options: ["25", "30", "40", "115"], 
+				answer: 2,
+				explanation: "1 thế kỉ = 100 năm nên 1/4 thế kỉ = 25 năm. Vậy 25 + 15 = 40 năm."
+			},
+			{ 
+				q: "Khẳng định: 'Đoạn thẳng MN song song với đoạn thẳng PQ' là đúng hay sai?", 
+				image: "image_1.png",
+				options: ["Đúng", "Sai"], 
+				answer: 0,
+				explanation: "Quan sát hình vẽ, MN và PQ là hai cạnh đối song song của hình bình hành MNPQ."
+			},
+			{ 
+				q: "Khẳng định: 'Đoạn thẳng MQ vuông góc với đoạn thẳng QP' là đúng hay sai?", 
+				image: "image_1.png",
+				options: ["Đúng", "Sai"], 
+				answer: 1,
+				explanation: "Góc MQP trong hình là góc tù/nhọn (tùy thuộc góc nhìn hình học phẳng), không phải là góc vuông."
+			},
+			{ 
+				q: "Khẳng định: 'Hình tứ giác MNPQ là hình bình hành' là đúng hay sai?", 
+				image: "image_1.png",
+				options: ["Đúng", "Sai"], 
+				answer: 0,
+				explanation: "Hình tứ giác MNPQ có các cặp cạnh đối song song và bằng nhau nên là hình bình hành."
+			},
+			{ 
+				q: "Khẳng định: 'Góc nhọn đỉnh M, cạnh MB, MP' là đúng hay sai?", 
+				image: "image_1.png",
+				options: ["Đúng", "Sai"], 
+				answer: 0,
+				explanation: "Quan sát hình vẽ, góc tạo bởi hai tia MB và MP là một góc nhọn."
+			},
+			{ 
+				q: "Kết quả của phép tính: 3/24 + 1/6 =", 
+				options: ["4/30", "7/24", "1/4", "3/4"], 
+				answer: 1,
+				explanation: "3/24 + 4/24 = 7/24."
+			},
+			{ 
+				q: "Kết quả của phép tính: 21/28 - 1/4 =", 
+				options: ["20/24", "1/2", "3/4", "2/4"], 
+				answer: 1,
+				explanation: "Rút gọn 21/28 = 3/4. Ta có 3/4 - 1/4 = 2/4 = 1/2."
+			},
+			{ 
+				q: "Kết quả của phép tính: 2/5 x 9/4 =", 
+				options: ["18/20", "9/10", "11/9", "18/9"], 
+				answer: 1,
+				explanation: "(2 x 9) / (5 x 4) = 18/20. Rút gọn cho 2 được 9/10."
+			},
+			{ 
+				q: "Kết quả của phép tính: 3/8 : 15/4 =", 
+				options: ["1/10", "45/32", "5/2", "12/120"], 
+				answer: 0,
+				explanation: "3/8 x 4/15 = (3 x 4) / (8 x 15) = 12/120 = 1/10."
+			},
+			{ 
+				q: "Tính bằng cách thuận tiện: 7125 x 125 x 8 =", 
+				options: ["7125000", "712500", "71250", "890625"], 
+				answer: 0,
+				explanation: "7125 x (125 x 8) = 7125 x 1000 = 7125000."
+			},
+			{ 
+				q: "Tính bằng cách thuận tiện: 7/11 x 8/9 + 7/11 x 1/3 =", 
+				options: ["7/11", "7/9", "1", "77/99"], 
+				answer: 1,
+				explanation: "7/11 x (8/9 + 1/3) = 7/11 x (8/9 + 3/9) = 7/11 x 11/9 = 7/9."
+			},
+			{ 
+				q: "Khối Ba thu được 1230 kg giấy vụn. Khối Bốn thu được gấp đôi khối Ba. Khối Năm thu được ít hơn khối Bốn 270 kg. Trung bình mỗi khối thu được bao nhiêu kg?", 
+				options: ["1830 kg", "1960 kg", "2000 kg", "2190 kg"], 
+				answer: 1,
+				explanation: "Khối Bốn: 1230x2=2460. Khối Năm: 2460-270=2190. Trung bình: (1230+2460+2190)/3 = 1960 kg."
+			},
+			{ 
+				q: "Có bao nhiêu khối lập phương nhỏ để xếp thành hình bên (hình bậc thang)?", 
+				image: "image_2.png",
+				options: ["20", "25", "30", "35"], 
+				answer: 2,
+				explanation: "Tính theo từng lớp: Lớp 1 có 4x3=12 viên, lớp 2 có 3x3=9 viên, lớp 3 có 2x3=6 viên, lớp 4 có 1x3=3 viên. Tổng: 12+9+6+3 = 30 viên."
+			}
+		];
+        // --- BIẾN TRẠNG THÁI ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // Các phần tử DOM
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackArea = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreDisplay = document.getElementById('score-display');
+        const finalScore = document.getElementById('final-score');
+
+        // Bắt đầu game
+        function startGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            gameScreen.classList.add('bounce-in');
+            loadQuestion();
+        }
+
+        // Tải nội dung câu hỏi
+        function loadQuestion() {
+            // Xóa dữ liệu cũ
+            optionsContainer.innerHTML = '';
+            feedbackArea.innerHTML = '';
+            nextBtn.classList.add('hidden');
+            
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            // Cập nhật thông tin
+            questionCounter.innerText = `Câu: ${currentQuestionIndex + 1}/${questions.length}`;
+            scoreDisplay.innerText = `Điểm: ${score}`;
+            
+            // Sử dụng innerHTML để in chuỗi an toàn
+            questionText.innerHTML = currentQuestion.q;
+			if (currentQuestion.image) {
+                // Chèn thêm thẻ div bọc ngoài để căn giữa hình ảnh
+				questionText.innerHTML += `<div class="flex justify-center mt-6 mb-2"><img src="${currentQuestion.image}" alt="Hình minh họa" class="max-w-full h-auto max-h-48 rounded-xl border-4 border-blue-100 shadow-sm"></div>`;
+			};
+
+            // Tạo các nút đáp án
+            currentQuestion.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn bg-white border-4 border-blue-200 text-gray-700 font-bold text-lg md:text-xl py-4 px-6 rounded-2xl w-full text-left flex items-center';
+                // Đánh nhãn A, B, C, D
+                const labels = ['A', 'B', 'C', 'D'];
+                btn.innerHTML = `<span class="bg-blue-100 text-blue-600 w-10 h-10 flex items-center justify-center rounded-full mr-4 shrink-0 border-2 border-blue-300 font-black">${labels[index]}</span> ${option}`;
+                btn.onclick = () => selectOption(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // Xử lý khi bé chọn đáp án
+        function selectOption(selectedIndex, selectedBtn) {
+            const currentQuestion = questions[currentQuestionIndex];
+            const isCorrect = (selectedIndex === currentQuestion.answer);
+            const allBtns = optionsContainer.querySelectorAll('.opt-btn');
+
+            // Vô hiệu hóa tất cả các nút
+            allBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+            });
+
+            // Khung HTML hiển thị phần Giải thích
+            const explanationHtml = `
+                <div class="bg-indigo-50 border-2 border-indigo-200 text-indigo-800 p-4 rounded-2xl text-left text-lg font-bold mt-4 shadow-sm">
+                    <span class="text-xl">💡</span> <b>Giải thích:</b> ${currentQuestion.explanation}
+                </div>`;
+
+            if (isCorrect) {
+                // Đúng
+                score++;
+                scoreDisplay.innerText = `Điểm: ${score}`;
+                selectedBtn.classList.add('opt-correct');
+                // Đổi màu hình tròn nhãn
+                selectedBtn.querySelector('span').classList.replace('bg-blue-100', 'bg-green-200');
+                selectedBtn.querySelector('span').classList.replace('text-blue-600', 'text-green-800');
+                
+                feedbackArea.innerHTML = `
+                    <div class="bounce-in">
+                        <div class="text-green-500 font-black text-3xl">✨ Chính xác! 😊 ✨</div>
+                        ${explanationHtml}
+                    </div>`;
+            } else {
+                // Sai
+                selectedBtn.classList.add('opt-wrong');
+                selectedBtn.querySelector('span').classList.replace('bg-blue-100', 'bg-red-200');
+                selectedBtn.querySelector('span').classList.replace('text-blue-600', 'text-red-800');
+
+                // Làm nhấp nháy đáp án đúng
+                const correctBtn = allBtns[currentQuestion.answer];
+                correctBtn.classList.add('blink-correct');
+
+                feedbackArea.innerHTML = `
+                    <div class="bounce-in">
+                        <div class="text-red-500 font-black text-3xl drop-shadow-sm">❌ Chưa đúng rồi! 😢</div>
+                        ${explanationHtml}
+                    </div>`;
+            }
+
+            // Hiện nút câu tiếp theo
+            nextBtn.classList.remove('hidden');
+            nextBtn.classList.add('bounce-in');
+        }
+
+        // Chuyển câu hỏi hoặc kết thúc
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        // Màn hình hoàn thành
+        function showEndScreen() {
+            gameScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            endScreen.classList.add('bounce-in');
+            finalScore.innerText = `${score} / ${questions.length}`;
+        }
+
+        // Chơi lại
+        function resetGame() {
+            startGame();
+        }
+    </script>
+</body>
+</html>
